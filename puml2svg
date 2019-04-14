@@ -1,0 +1,49 @@
+#!/bin/bash
+
+###
+#
+# Convert PlantUML files to SVG
+#
+# First argument is directory which is scanned
+# for PlantUML files. SVG file has same name as
+# PlantUML file with .svg extension appended.
+#
+# This file is public domain, see LICENSE for details
+###
+
+if [ ! -d "$1" ]; then
+    echo "First argument must be a directory"
+    exit 1
+fi
+
+cd "$1"
+
+echo "Processing Plant UML files in:"
+echo $PWD
+echo ""
+
+for f in *; do
+    if [ ! -f "$f" ]; then
+        echo "Skipping '$f' (not a file)"
+        continue
+    fi
+    if [ ! -r "$f" ]; then
+        echo "Skipping '$f' (not readable)"
+        continue
+    fi
+    firstline="$(head -n1 "$f")"
+    if [ "$firstline" != "@startuml" ]; then
+        echo "Skipping '$f' (not a PlantUML file)"
+        continue
+    fi
+    echo "Converting '$f' to SVG..."
+    svg="$f.svg"
+    if [ -e "$svg" ]; then
+        echo "Abort converting '$f'. Output file '$svg' exists already."
+    fi
+    cat "$f" | docker run --rm -i think/plantuml > "$svg"
+    echo "Created '$svg'"
+    echo ""
+done
+echo ""
+echo "Done"
